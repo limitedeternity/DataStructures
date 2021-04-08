@@ -51,7 +51,7 @@ public:
         return pa[index];
     }
 
-    void add(T val) {
+    void add(T const& val) {
         if (nextIndex == length) {
             if (length == 0) length = 1;
             else length *= 2;
@@ -69,7 +69,7 @@ public:
         pa[nextIndex++] = val;
     }
 
-    void insertAt(size_t index, T val) {
+    void insertAt(size_t index, T const& val) {
         if (index >= nextIndex) {
             throw std::out_of_range("Out of range");
         }
@@ -123,7 +123,7 @@ public:
         return nextIndex;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, DynArray& d) {
+    friend std::ostream& operator<<(std::ostream& os, DynArray const& d) {
         os << "[";
         for (size_t i = 0; i < d.size() - 1; ++i) {
             os << d[i] << ", ";
