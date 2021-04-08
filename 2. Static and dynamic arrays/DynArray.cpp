@@ -13,6 +13,27 @@ public:
         nextIndex = 0;
     }
 
+    // copy constructors
+    DynArray(const DynArray&) = delete;
+    DynArray& operator=(const DynArray&) = delete;
+
+    // move constructors
+    DynArray(DynArray&& source) noexcept {
+        pa.reset(source.pa.release());
+        length = source.length;
+        nextIndex = source.nextIndex;
+    }
+
+    DynArray& operator=(DynArray&& source) noexcept {
+        if (this != &source) {
+            pa.reset(source.pa.release());
+            length = source.length;
+            nextIndex = source.nextIndex;
+        }
+        
+        return *this;
+    }
+
     T& operator[](size_t index) {
         // Нафиг undefined behavior
         if (index >= nextIndex) {
@@ -98,7 +119,7 @@ public:
         nextIndex = 0;
     }
 
-    int size() noexcept {
+    size_t size() noexcept {
         return nextIndex;
     }
 
@@ -114,8 +135,8 @@ public:
 
 private:
     std::unique_ptr<T[]> pa;
-    int length;
-    int nextIndex;
+    size_t length;
+    size_t nextIndex;
 };
 
 int main(void) {
