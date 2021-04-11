@@ -81,7 +81,7 @@ public:
 
         ++size;
     }
-    
+
     void insertAt(size_t index, T const& elem) {
         if (index == 0) return addFirst(elem);
         if (index >= size) throw std::out_of_range("Out of range");
@@ -156,7 +156,7 @@ public:
             head = head->next;
             head->prev.reset();
         }
-        
+
         --size;
     }
 
@@ -251,7 +251,7 @@ int main(void) {
     dl.removeFirst();
     dl.removeLast();
     dl.removeAt(dl.indexOf(10));
-    
+
     std::cout << dl << std::endl << std::endl;
     std::cout << "First element: " << dl.getFirst() << std::endl;
     std::cout << "Last element: " << dl.getLast() << std::endl;

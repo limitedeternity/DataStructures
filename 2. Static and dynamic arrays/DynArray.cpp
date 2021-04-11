@@ -30,7 +30,7 @@ public:
             length = source.length;
             nextIndex = source.nextIndex;
         }
-        
+
         return *this;
     }
 
@@ -96,7 +96,7 @@ public:
         if (index >= nextIndex) {
             throw std::out_of_range("Out of range");
         }
-        
+
         auto prev = pa.release();
         pa.reset(new T[length - 1]);
 
@@ -148,7 +148,7 @@ int main(void) {
     d.add(5);
 
     std::cout << d << std::endl;
-    
+
     d.removeAt(4);
     d.removeAt(1);
     d.add(50);
