@@ -1,23 +1,21 @@
 #include <iostream>
-#include <memory>
+#include "non_std_make_unique.hpp"
+#include "Functional.hpp"
 
-template <class T>
+template <typename T>
 class DoublyLinkedList {
 public:
     DoublyLinkedList() = default;
-    ~DoublyLinkedList() {
-        while (head) {
-            removeLast();
-        }
+
+    virtual ~DoublyLinkedList() {
+        clear();
     }
 
     DoublyLinkedList(const DoublyLinkedList&) = delete;
     DoublyLinkedList& operator=(const DoublyLinkedList&) = delete;
 
     DoublyLinkedList(DoublyLinkedList&& source) noexcept {
-        while (head) {
-            removeLast();
-        }
+        clear();
 
         size = source.size;
         std::swap(head, source.head);
@@ -26,9 +24,7 @@ public:
 
     DoublyLinkedList& operator=(DoublyLinkedList&& source) noexcept {
         if (this != &source) {
-            while (head) {
-                removeLast();
-            }
+            clear();
 
             size = source.size;
             std::swap(head, source.head);
@@ -176,6 +172,16 @@ public:
         --size;
     }
 
+    void clear() {
+        while (head) {
+            removeLast();
+        }
+    }
+
+    size_t sizeOf() noexcept {
+        return size;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, DoublyLinkedList const& l) {
         os << "[";
 
@@ -193,32 +199,28 @@ public:
         return os;
     }
 
-    size_t sizeOf() noexcept {
-        return size;
-    }
-
-private:
+protected:
     class Node {
     public:
         Node(T const& i_data, std::shared_ptr<Node>& i_next, std::shared_ptr<Node>& i_prev) : 
-            data(std::make_unique<T>(i_data)), 
+            data(non_std::make_unique<T>(i_data)), 
             next(i_next),
             prev(i_prev)
         {}
 
-        Node(T const& i_data, std::nullptr_t i_next, std::shared_ptr<Node>& i_prev) :
-            data(std::make_unique<T>(i_data)),
+       Node(T const& i_data, std::nullptr_t i_next, std::shared_ptr<Node>& i_prev) :
+            data(non_std::make_unique<T>(i_data)),
             next(i_next),
             prev(i_prev)
         {}
 
         Node(T const& i_data, std::shared_ptr<Node>& i_next, std::nullptr_t i_prev) :
-            data(std::make_unique<T>(i_data)),
+            data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
 
         Node(T const& i_data, std::nullptr_t i_next, std::nullptr_t i_prev) : 
-            data(std::make_unique<T>(i_data)),
+            data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
 
@@ -227,6 +229,73 @@ private:
         std::weak_ptr<Node> prev;
     };
 
+public:
+    class bidirect_iter {
+    public:
+        bidirect_iter(std::shared_ptr<Node> ptr) {
+            if (ptr.get()) {
+                node_ptr = ptr;
+                return;
+            }
+
+            throw std::invalid_argument("Cant iterate over nullptr");
+        }
+
+        T& extract() {
+            return *(node_ptr.lock()->data);
+        }
+
+        bidirect_iter& step_forward() {
+            auto ptr_locked = node_ptr.lock();
+            if (ptr_locked->next.get()) {
+                node_ptr = ptr_locked->next;
+                end_reached = false;
+                return *this;
+            }
+
+            end_reached = true;
+            return *this;
+        }
+
+        bidirect_iter& step_backward() {
+            auto prev_locked = node_ptr.lock()->prev.lock();
+            if (prev_locked.get()) {
+                node_ptr = prev_locked;
+                end_reached = false;
+                return *this;
+            }
+
+            end_reached = true;
+            return *this;
+        }
+
+        bool exhausted() {
+            return end_reached;
+        }
+
+    private:
+        std::weak_ptr<Node> node_ptr;
+        bool end_reached = false;
+    };
+
+    Maybe<bidirect_iter> fd_iter() {
+        if (head.get()) {
+            return return_<Maybe>(bidirect_iter(head));
+        }
+
+        return Maybe<bidirect_iter>();
+    }
+
+    Maybe<bidirect_iter> bk_iter() {
+        auto tail_locked = tail.lock();
+        if (tail_locked.get()) {
+            return return_<Maybe>(bidirect_iter(tail_locked));
+        }
+
+        return Maybe<bidirect_iter>();
+    }
+
+private:
     size_t size = 0;
     std::shared_ptr<Node> head = nullptr;
     std::weak_ptr<Node> tail;
@@ -234,6 +303,7 @@ private:
 
 int main(void) {
     DoublyLinkedList<int> dl;
+
     dl.add(1);
     dl.add(2);
     dl.add(3);
@@ -245,14 +315,27 @@ int main(void) {
     dl.insertAt(1, 9);
     dl.insertAt(3, 10);
     dl.insertAt(0, 50);
+    dl.getFirst() = 51;
 
-    std::cout << dl << std::endl;
+    function<bool(decltype(dl)::bidirect_iter)> isIterExhausted = 
+        [](decltype(dl)::bidirect_iter it) { return !it.exhausted(); };
+
+    for (
+        auto maybe_it = dl.fd_iter();
+        (isIterExhausted % maybe_it).on(
+            [](bool exh) { return exh; },
+            []() { return false; }
+        );
+        maybe_it.fromJust().step_forward()
+    ) {
+        std::cout << maybe_it.fromJust().extract() << " ";
+    }
 
     dl.removeFirst();
     dl.removeLast();
     dl.removeAt(dl.indexOf(10));
 
-    std::cout << dl << std::endl << std::endl;
+    std::cout << std::endl << dl << std::endl;
     std::cout << "First element: " << dl.getFirst() << std::endl;
     std::cout << "Last element: " << dl.getLast() << std::endl;
     std::cout << "Index of 10: " << dl.indexOf(10) << std::endl;
