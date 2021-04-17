@@ -1,13 +1,13 @@
 #include <iostream>
-#include "non_std_make_unique.hpp"
-#include "Functional.hpp"
+#include "../Headers/non_std_make_unique.hpp"
+#include "../Headers/Functional.hpp"
 
 template <typename T>
 class DoublyLinkedList {
 public:
     DoublyLinkedList() = default;
 
-    virtual ~DoublyLinkedList() {
+    virtual ~DoublyLinkedList() noexcept {
         clear();
     }
 
@@ -23,7 +23,7 @@ public:
     }
 
     DoublyLinkedList& operator=(DoublyLinkedList&& source) noexcept {
-        if (this != &source) {
+        if (std::addressof(*this) != std::addressof(&source)) {
             clear();
 
             size = source.size;
@@ -34,27 +34,27 @@ public:
         return *this;
     }
 
-    T& getFirst() {
+    Maybe<T> getFirst() const noexcept {
         if (!size) {
-            throw std::out_of_range("List is empty");
+            return Maybe<T>();
         }
 
-        return *head->data;
+        return return_<Maybe>(*head->data);
     }
 
-    T& getLast() {
+    Maybe<T> getLast() const noexcept {
         if (!size) {
-            throw std::out_of_range("List is empty");
+            return Maybe<T>();
         }
 
-        return *(tail.lock()->data);
+        return return_<Maybe>(*(tail.lock()->data));
     }
 
-    void add(T const& elem) {
+    void add(T const& elem) noexcept {
         addLast(elem);
     }
 
-    void addFirst(T const& elem) {
+    void addFirst(T const& elem) noexcept {
         if (!size) {
             tail = head = std::make_shared<Node>(elem, nullptr, nullptr);
         } else {
@@ -66,7 +66,7 @@ public:
         ++size;
     }
 
-    void addLast(T const& elem) {
+    void addLast(T const& elem) noexcept {
         if (!size) {
             tail = head = std::make_shared<Node>(elem, nullptr, nullptr);
         } else {
@@ -78,14 +78,13 @@ public:
         ++size;
     }
 
-    void insertAt(size_t index, T const& elem) {
-        if (index == 0) return addFirst(elem);
-        if (index >= size) throw std::out_of_range("Out of range");
-        if (index == size - 1) return addLast(elem);
+    void insertAt(size_t index, T const& elem) noexcept {
+        if (size == 0 || index == 0) return addFirst(elem);
+        if (index >= size) return addLast(elem);
 
         std::shared_ptr<Node> trav;
 
-        if (index < size / 2) {
+        if (index <= size / 2) {
             trav = head;
             for (size_t i = 0; i < index; ++i) {
                 trav = trav->next;
@@ -104,25 +103,25 @@ public:
         ++size;
     }
 
-    int indexOf(T const& elem) {
+    Maybe<size_t> indexOf(T const& elem) const noexcept {
         std::shared_ptr<Node> trav = head;
         for (size_t idx = 0; idx < size; ++idx, trav = trav->next) {
             if (*trav->data == elem) {
-                return idx;
+                return return_<Maybe>(idx);
             }
         }
 
-        return -1;
+        return Maybe<size_t>();
     }
 
-    void removeAt(size_t index) {
-        if (index == 0) return removeFirst();
-        if (index >= size) throw std::out_of_range("Out of range");
+    void removeAt(size_t index) noexcept {
+        if (size <= 1 || index == 0) return removeFirst();
+        if (index >= size) index = size - 1;
         if (index == size - 1) return removeLast();
 
         std::shared_ptr<Node> trav;
 
-        if (index < size / 2) {
+        if (index <= size / 2) {
             trav = head;
             for (size_t i = 0; i < index; ++i) {
                 trav = trav->next;
@@ -142,8 +141,8 @@ public:
         --size;
     }
 
-    void removeFirst() {
-        if (!size) throw std::out_of_range("List is empty");
+    void removeFirst() noexcept {
+        if (!size) return;
         if (size == 1) {
             head.reset();
             tail.reset();
@@ -156,8 +155,8 @@ public:
         --size;
     }
 
-    void removeLast() {
-        if (!size) throw std::out_of_range("List is empty");
+    void removeLast() noexcept {
+        if (!size) return;
         if (size == 1) {
             tail.reset();
             head.reset();
@@ -172,13 +171,13 @@ public:
         --size;
     }
 
-    void clear() {
+    void clear() noexcept {
         while (head) {
             removeLast();
         }
     }
 
-    size_t sizeOf() noexcept {
+    size_t sizeOf() const noexcept {
         return size;
     }
 
@@ -232,22 +231,44 @@ protected:
 public:
     class bidirect_iter {
     public:
-        bidirect_iter(std::shared_ptr<Node> ptr) {
-            if (ptr.get()) {
-                node_ptr = ptr;
-                return;
+        bidirect_iter& operator=(const bidirect_iter& source) {
+            if (std::addressof(master) != std::addressof(source.master)) {
+                throw std::invalid_argument("Unable to copy bidirect_iter owned by another instance of DoublyLinkedList");
             }
 
-            throw std::invalid_argument("Cant iterate over nullptr");
+            if (std::addressof(*this) != std::addressof(source)) {
+                forward_init = source.forward_init;
+                reset();
+            }
+
+            return *this;
         }
 
-        T& extract() {
-            return *(node_ptr.lock()->data);
-        }
-
-        bidirect_iter& step_forward() {
+        Maybe<T> extract() const noexcept {
             auto ptr_locked = node_ptr.lock();
-            if (ptr_locked->next.get()) {
+            if (ptr_locked) return return_<Maybe>(*ptr_locked->data);
+            return Maybe<T>();
+        }
+
+        void assign(T const& elem) noexcept {
+            auto ptr_locked = node_ptr.lock();
+            if (ptr_locked) *ptr_locked->data = elem; 
+        }
+
+        void reset() noexcept {
+            auto ptr = forward_init ? master.head : master.tail.lock();
+            node_ptr = ptr;
+            end_reached = !ptr;
+        }
+
+        bidirect_iter& step_forward() noexcept {
+            auto ptr_locked = node_ptr.lock();
+            if (ptr_locked) {
+                if (!ptr_locked->next) {
+                    end_reached = true;
+                    return *this;
+                }
+
                 node_ptr = ptr_locked->next;
                 end_reached = false;
                 return *this;
@@ -257,9 +278,15 @@ public:
             return *this;
         }
 
-        bidirect_iter& step_backward() {
-            auto prev_locked = node_ptr.lock()->prev.lock();
-            if (prev_locked.get()) {
+        bidirect_iter& step_backward() noexcept {
+            auto ptr_locked = node_ptr.lock();
+            if (ptr_locked) {
+                auto prev_locked = ptr_locked->prev.lock();
+                if (!prev_locked) {
+                    end_reached = true;
+                    return *this;
+                }
+
                 node_ptr = prev_locked;
                 end_reached = false;
                 return *this;
@@ -269,30 +296,36 @@ public:
             return *this;
         }
 
-        bool exhausted() {
+        bool exhausted() const noexcept {
             return end_reached;
         }
 
+        friend class DoublyLinkedList;
+
     private:
+        bidirect_iter(DoublyLinkedList const& l, bool fd = true) :
+            master{l},
+            forward_init{fd}
+        {
+            auto ptr = fd ? l.head : l.tail.lock();
+            node_ptr = ptr;
+            end_reached = !ptr;
+        }
+
+        DoublyLinkedList const& master;
         std::weak_ptr<Node> node_ptr;
-        bool end_reached = false;
+        bool end_reached;
+        bool forward_init;
     };
 
-    Maybe<bidirect_iter> fd_iter() {
-        if (head.get()) {
-            return return_<Maybe>(bidirect_iter(head));
-        }
+    friend class bidirect_iter;
 
-        return Maybe<bidirect_iter>();
+    bidirect_iter fd_iter() noexcept {
+        return bidirect_iter(*this);
     }
 
-    Maybe<bidirect_iter> bk_iter() {
-        auto tail_locked = tail.lock();
-        if (tail_locked.get()) {
-            return return_<Maybe>(bidirect_iter(tail_locked));
-        }
-
-        return Maybe<bidirect_iter>();
+    bidirect_iter bk_iter() noexcept {
+        return bidirect_iter(*this, false);
     }
 
 private:
@@ -304,6 +337,15 @@ private:
 int main(void) {
     DoublyLinkedList<int> dl;
 
+    dl.insertAt(1, 9);
+    dl.removeAt(1);
+    dl.insertAt(1, 9);
+    dl.insertAt(3, 10);
+    dl.removeAt(1);
+    dl.insertAt(3, 10);
+    dl.insertAt(5, 15);
+    dl.removeAt(1);
+
     dl.add(1);
     dl.add(2);
     dl.add(3);
@@ -312,30 +354,21 @@ int main(void) {
 
     std::cout << dl << std::endl;
 
-    dl.insertAt(1, 9);
-    dl.insertAt(3, 10);
-    dl.insertAt(0, 50);
-    dl.getFirst() = 51;
+    auto it = dl.fd_iter();
+    it.assign(51);
 
-    function<bool(decltype(dl)::bidirect_iter)> isIterExhausted = 
-        [](decltype(dl)::bidirect_iter it) { return !it.exhausted(); };
-
-    for (
-        auto maybe_it = dl.fd_iter();
-        (isIterExhausted % maybe_it).on(
-            [](bool exh) { return exh; },
-            []() { return false; }
-        );
-        maybe_it.fromJust().step_forward()
-    ) {
-        std::cout << maybe_it.fromJust().extract() << " ";
+    for (;!it.exhausted(); it.step_forward()) {
+        std::cout << it.extract().fromJust() << " ";
     }
 
-    dl.removeFirst();
-    dl.removeLast();
-    dl.removeAt(dl.indexOf(10));
+    std::cout << std::endl;
 
-    std::cout << std::endl << dl << std::endl;
+    it = dl.bk_iter();
+    for (;!it.exhausted(); it.step_backward()) {
+        std::cout << it.extract().fromJust() << " ";
+    }
+
+    std::cout << std::endl << "Exhausted iterator yields: " << it.extract() << std::endl;
     std::cout << "First element: " << dl.getFirst() << std::endl;
     std::cout << "Last element: " << dl.getLast() << std::endl;
     std::cout << "Index of 10: " << dl.indexOf(10) << std::endl;

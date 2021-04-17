@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include "../Headers/Functional.hpp"
 
 template <class T>
 class DynArray {
@@ -8,16 +9,15 @@ public:
         this(10);
     }
 
-    DynArray(size_t size) : pa{new T[size]} {
-        length = size;
-        nextIndex = 0;
-    }
+    DynArray(size_t size) : 
+        pa{new T[size]},
+        length{size},
+        nextIndex{0}
+    {}
 
-    // copy constructors
     DynArray(const DynArray&) = delete;
     DynArray& operator=(const DynArray&) = delete;
 
-    // move constructors
     DynArray(DynArray&& source) noexcept {
         pa.reset(source.pa.release());
         length = source.length;
@@ -25,7 +25,7 @@ public:
     }
 
     DynArray& operator=(DynArray&& source) noexcept {
-        if (this != &source) {
+        if (std::addressof(*this) != std::addressof(&source)) {
             pa.reset(source.pa.release());
             length = source.length;
             nextIndex = source.nextIndex;
@@ -35,20 +35,19 @@ public:
     }
 
     T& operator[](size_t index) {
-        // Нафиг undefined behavior
-        if (index >= nextIndex) {
+        if (nextIndex == 0 || index >= nextIndex) {
             throw std::out_of_range("Out of range");
         }
 
         return pa[index];
     }
 
-    T& at(size_t index) {
-        if (index >= nextIndex) {
-            throw std::out_of_range("Out of range");
+    Maybe<T> at(size_t index) const noexcept {
+        if (nextIndex == 0) {
+            return Maybe<T>();
         }
 
-        return pa[index];
+        return return_<Maybe>(pa[index >= nextIndex ? nextIndex - 1 : index]);
     }
 
     void add(T const& val) {
@@ -70,9 +69,8 @@ public:
     }
 
     void insertAt(size_t index, T const& val) {
-        if (index >= nextIndex) {
-            throw std::out_of_range("Out of range");
-        }
+        if (nextIndex == 0) return add(val);
+        if (index >= nextIndex) index = nextIndex - 1;
 
         auto prev = pa.release();
         pa.reset(new T[length + 1]);
@@ -93,9 +91,8 @@ public:
     }
 
     void removeAt(size_t index) {
-        if (index >= nextIndex) {
-            throw std::out_of_range("Out of range");
-        }
+        if (nextIndex == 0) return;
+        if (index >= nextIndex) index = nextIndex - 1;
 
         auto prev = pa.release();
         pa.reset(new T[length - 1]);
@@ -119,17 +116,17 @@ public:
         nextIndex = 0;
     }
 
-    size_t size() noexcept {
+    size_t size() const noexcept {
         return nextIndex;
     }
 
     friend std::ostream& operator<<(std::ostream& os, DynArray const& d) {
         os << "[";
         for (size_t i = 0; i < d.size() - 1; ++i) {
-            os << d[i] << ", ";
+            os << d.at(i).fromJust() << ", ";
         }
 
-        os << d[d.size() - 1] << "]";
+        os << d.at(d.size() - 1).fromJust() << "]";
         return os; 
     }
 
