@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "../Headers/non_std_make_unique.hpp"
+#include "../Headers/NonSTD.hpp"
 #include "../Headers/Functional.hpp"
 
 template <typename T>
@@ -185,11 +185,11 @@ public:
         return size;
     }
 
-    std::string toString() const noexcept {
+    friend std::string to_string(DoublyLinkedList const& l) noexcept {
         std::stringstream ss;
         ss << "[";
 
-        std::shared_ptr<Node> trav = head;
+        std::shared_ptr<Node> trav = l.head;
         while (trav) {
             ss << *trav->data;
             if (trav->next) {
@@ -203,8 +203,32 @@ public:
         return ss.str();
     }
 
-    friend std::ostream& operator<<(std::ostream& os, DoublyLinkedList const& l) {
-        return os << l.toString();
+    friend std::ostream& operator<<(std::ostream& os, DoublyLinkedList const& l) noexcept {
+        return os << non_std::to_string(l);
+    }
+
+    bool operator!=(DoublyLinkedList const& rhs) const noexcept {
+        return !operator==(rhs);
+    }
+
+    bool operator==(DoublyLinkedList const& rhs) const noexcept {
+        if (std::addressof(*this) == std::addressof(rhs)) {
+            return true;
+        }
+
+        if (size != rhs.size) {
+            return false;
+        }
+
+        auto this_it = fd_iter();
+        auto rhs_it = rhs.fd_iter();
+        for (;!this_it.exhausted(); this_it.step_forward(), rhs_it.step_forward()) {
+            if (this_it.extract() != rhs_it.extract()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 protected:
@@ -329,11 +353,11 @@ public:
 
     friend class bidirect_iter;
 
-    bidirect_iter fd_iter() noexcept {
+    bidirect_iter fd_iter() const noexcept {
         return bidirect_iter(*this);
     }
 
-    bidirect_iter bk_iter() noexcept {
+    bidirect_iter bk_iter() const noexcept {
         return bidirect_iter(*this, false);
     }
 

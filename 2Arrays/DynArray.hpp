@@ -106,7 +106,8 @@ public:
         pa = non_std::make_unique<T[]>(length - 1);
 
         if (index > 0) std::memcpy(pa.get(), prev, sizeof(T) * index);
-        std::memcpy(pa.get() + index, prev + index + 1, sizeof(T) * (nextIndex - index));
+        if (nextIndex - index - 1 > 0) 
+            std::memcpy(pa.get() + index, prev + index + 1, sizeof(T) * (nextIndex - index - 1));
 
         delete[] prev;
         length--;
@@ -171,7 +172,7 @@ private:
     size_t nextIndex;
 };
 
-int main(void) {
+/*int main(void) {
     DynArray<int> d(3);
     d.add(1);
     d.add(2);
@@ -193,4 +194,4 @@ int main(void) {
 
     std::cout << d << std::endl;
     return 0;
-}
+}*/
