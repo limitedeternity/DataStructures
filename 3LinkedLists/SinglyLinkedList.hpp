@@ -1,4 +1,8 @@
+#pragma once
+
 #include <iostream>
+#include <string>
+#include <sstream>
 #include "../Headers/non_std_make_unique.hpp"
 #include "../Headers/Functional.hpp"
 
@@ -100,21 +104,26 @@ public:
         return size;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, SinglyLinkedList const& l) {
-        os << "[";
+    std::string toString() const noexcept {
+        std::stringstream ss;
+        ss << "[";
 
-        std::shared_ptr<Node> trav = l.head;
+        std::shared_ptr<Node> trav = head;
         while (trav) {
-            os << *trav->data;
+            ss << *trav->data;
             if (trav->next) {
-                os << " -> ";
+                ss << " -> ";
             }
 
             trav = trav->next;
         }
 
-        os << "]";
-        return os;
+        ss << "]";
+        return ss.str();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, SinglyLinkedList const& l) {
+        return os << l.toString();
     }
 
 protected:
@@ -207,7 +216,7 @@ private:
     std::shared_ptr<Node> head = nullptr;
 };
 
-int main(void) {
+/*int main(void) {
     SinglyLinkedList<int> lst;
 
     lst.insertAt(1, 9);
@@ -239,4 +248,4 @@ int main(void) {
     std::cout << "Index of 10: " << lst.indexOf(10) << std::endl;
     std::cout << "Size of the list: " << lst.sizeOf() << std::endl;
     return 0;
-}
+}*/

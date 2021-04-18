@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "non_std_make_unique.hpp"
+#include "NonSTD.hpp"
 
 using std::function;
 using std::vector;
@@ -67,7 +67,7 @@ public:
     explicit Maybe(T const& value) : _value(std::move(non_std::make_unique<T>(value))) {};
 
     template <typename WhenJust, typename WhenNothing>
-    auto on(WhenJust&& whenJust, WhenNothing&& whenNothing) -> decltype(whenNothing()) {
+    auto on(WhenJust&& whenJust, WhenNothing&& whenNothing) const -> decltype(whenNothing()) {
         if (isNothing()) return whenNothing();
         return whenJust(*_value);
     }
@@ -92,6 +92,35 @@ public:
         }
 
         return os << "Nothing";
+    }
+
+    bool operator!=(Maybe<T> const& rhs) {
+        return !operator==(rhs);
+    }
+
+    bool operator==(Maybe<T> const& rhs) {
+        return on(
+            [&](T val1) { // Just val1
+                return rhs.on(
+                    [&](T val2) { // Just val2
+                        return val1 == val2;
+                    },
+                    [&]() { // Nothing
+                        return false;
+                    }
+                );
+            },
+            [&]() { // Nothing
+                return rhs.on(
+                    [&](T _) { // Just _
+                        return false;
+                    },
+                    [&]() { // Nothing
+                        return true;
+                    }
+                );
+            }
+        );
     }
 
 private:

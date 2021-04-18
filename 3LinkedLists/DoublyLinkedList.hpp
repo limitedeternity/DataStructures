@@ -1,4 +1,8 @@
+#pragma once
+
 #include <iostream>
+#include <string>
+#include <sstream>
 #include "../Headers/non_std_make_unique.hpp"
 #include "../Headers/Functional.hpp"
 
@@ -181,21 +185,26 @@ public:
         return size;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, DoublyLinkedList const& l) {
-        os << "[";
+    std::string toString() const noexcept {
+        std::stringstream ss;
+        ss << "[";
 
-        std::shared_ptr<Node> trav = l.head;
+        std::shared_ptr<Node> trav = head;
         while (trav) {
-            os << *trav->data;
+            ss << *trav->data;
             if (trav->next) {
-                os << " <-> ";
+                ss << " <-> ";
             }
 
             trav = trav->next;
         }
 
-        os << "]";
-        return os;
+        ss << "]";
+        return ss.str();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, DoublyLinkedList const& l) {
+        return os << l.toString();
     }
 
 protected:
@@ -334,7 +343,7 @@ private:
     std::weak_ptr<Node> tail;
 };
 
-int main(void) {
+/*int main(void) {
     DoublyLinkedList<int> dl;
 
     dl.insertAt(1, 9);
@@ -374,4 +383,4 @@ int main(void) {
     std::cout << "Index of 10: " << dl.indexOf(10) << std::endl;
     std::cout << "Size of the list: " << dl.sizeOf() << std::endl;
     return 0;
-}
+}*/
