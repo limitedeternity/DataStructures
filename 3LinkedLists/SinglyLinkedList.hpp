@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "../Headers/non_std_make_unique.hpp"
+#include "../Headers/NonSTD.hpp"
 #include "../Headers/Functional.hpp"
 
 template <typename T>
@@ -104,11 +104,11 @@ public:
         return size;
     }
 
-    std::string toString() const noexcept {
+    friend std::string to_string(SinglyLinkedList const& l) noexcept {
         std::stringstream ss;
         ss << "[";
 
-        std::shared_ptr<Node> trav = head;
+        std::shared_ptr<Node> trav = l.head;
         while (trav) {
             ss << *trav->data;
             if (trav->next) {
@@ -123,7 +123,31 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, SinglyLinkedList const& l) {
-        return os << l.toString();
+        return os << non_std::to_string(l);
+    }
+
+    bool operator!=(SinglyLinkedList const& rhs) const noexcept {
+        return !operator==(rhs);
+    }
+
+    bool operator==(SinglyLinkedList const& rhs) const noexcept {
+        if (std::addressof(*this) == std::addressof(rhs)) {
+            return true;
+        }
+
+        if (size != rhs.size) {
+            return false;
+        }
+
+        auto this_it = iter();
+        auto rhs_it = rhs.iter();
+        for (;!this_it.exhausted(); this_it.step(), rhs_it.step()) {
+            if (this_it.extract() != rhs_it.extract()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 protected:
@@ -207,7 +231,7 @@ public:
 
     friend class forward_iter;
 
-    forward_iter iter() noexcept {
+    forward_iter iter() const noexcept {
         return forward_iter(*this);
     }
 
