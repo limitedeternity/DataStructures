@@ -14,12 +14,13 @@
 
 ### Complexity
 
-|    Pushing    | O(1) |
-| :-----------: | :--: |
-|    Popping    | O(1) |
-|    Pushing    | O(1) |
-|   Searching   | O(n) |
-| Size Checking | O(1) |
+|   Operation   | Complexity |
+| :-----------: | :--------: |
+|    Pushing    |    O(1)    |
+|    Popping    |    O(1)    |
+|   Searching   |    O(n)    |
+|   Removing    |    O(n)    |
+| Size Checking |    O(1)    |
 
 ### Example – Brackets
 
