@@ -19,20 +19,14 @@ public:
     SinglyLinkedList& operator=(const SinglyLinkedList&) = delete;
 
     SinglyLinkedList(SinglyLinkedList&& source) noexcept {
-        clear();
-
         size = source.size;
         std::swap(head, source.head);
     }
 
     SinglyLinkedList& operator=(SinglyLinkedList&& source) noexcept {
-        if (this != &source) {
-            clear();
-
-            size = source.size;
-            std::swap(head, source.head);
-        }
-
+        clear();
+        size = source.size;
+        std::swap(head, source.head);
         return *this;
     }
 

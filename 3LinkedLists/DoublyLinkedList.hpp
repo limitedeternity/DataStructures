@@ -19,22 +19,16 @@ public:
     DoublyLinkedList& operator=(const DoublyLinkedList&) = delete;
 
     DoublyLinkedList(DoublyLinkedList&& source) noexcept {
-        clear();
-
         size = source.size;
         std::swap(head, source.head);
         std::swap(tail, source.tail);
     }
 
     DoublyLinkedList& operator=(DoublyLinkedList&& source) noexcept {
-        if (std::addressof(*this) != std::addressof(&source)) {
-            clear();
-
-            size = source.size;
-            std::swap(head, source.head);
-            std::swap(tail, source.tail);
-        }
-
+        clear();
+        size = source.size;
+        std::swap(head, source.head);
+        std::swap(tail, source.tail);
         return *this;
     }
 

@@ -43,12 +43,9 @@ public:
     }
 
     DynArray& operator=(DynArray&& source) noexcept {
-        if (std::addressof(*this) != std::addressof(&source)) {
-            pa.reset(source.pa.release());
-            length = source.length;
-            nextIndex = source.nextIndex;
-        }
-
+        length = source.length;
+        nextIndex = source.nextIndex;
+        pa.reset(source.pa.release());
         return *this;
     }
 
