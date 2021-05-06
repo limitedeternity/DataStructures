@@ -16,6 +16,8 @@ public:
         nextIndex{0}
     {}
 
+    virtual ~DynArray() = default;
+
     DynArray(const DynArray& source) noexcept :
         pa(non_std::make_unique<T[]>(source.length)),
         length{source.length},

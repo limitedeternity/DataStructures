@@ -7,6 +7,8 @@ class Queue : public DoublyLinkedList<T> {
 public:
     Queue() : DoublyLinkedList<T>() {}
 
+    virtual ~Queue() = default;
+
     Maybe<T> poll() noexcept {
         auto result = this->getFirst();
         this->removeFirst();

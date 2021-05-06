@@ -7,6 +7,8 @@ class Stack : public SinglyLinkedList<T> {
 public:
     Stack() : SinglyLinkedList<T>() {}
 
+    virtual ~Stack() = default;
+
     Maybe<T> pop() noexcept {
         auto result = this->get();
         this->remove();
