@@ -99,7 +99,11 @@ public:
 
     void removeAt(size_t index) noexcept {
         if (nextIndex == 0) return;
-        if (index >= nextIndex) index = nextIndex - 1;
+        if (index >= nextIndex - 1) {
+            pa[nextIndex - 1].~T();
+            nextIndex--;
+            return;
+        }
 
         auto prev = pa.release();
         pa = non_std::make_unique<T[]>(length - 1);
