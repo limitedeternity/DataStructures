@@ -178,3 +178,22 @@ static function<C(A)> compose(function<B(A)> f1, function<C(B)> f2) {
         return f2(f1(v));
     };
 }
+
+#if __cplusplus > 201103L
+
+template<class F>
+struct y_combinate_t {
+    F f;
+
+    template<class...Args>
+    auto operator()(Args&&...args) const {
+        return f(*this, std::forward<Args>(args)...);
+    }
+};
+
+template<class F>
+y_combinate_t<std::decay_t<F>> fix(F&& f) {
+    return {std::forward<F>(f)};
+};
+
+#endif
