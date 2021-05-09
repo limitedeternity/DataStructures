@@ -15,20 +15,47 @@ public:
         clear();
     }
 
-    DoublyLinkedList(const DoublyLinkedList&) = delete;
-    DoublyLinkedList& operator=(const DoublyLinkedList&) = delete;
+    DoublyLinkedList(DoublyLinkedList const& source) noexcept {
+        std::shared_ptr<Node> trav = source.head;
+        for (size_t idx = 0; idx < source.size; ++idx, trav = trav->next) {
+            add(*trav->data);
+        }
+
+        if (source.is_circular) loop();
+    }
+
+    DoublyLinkedList& operator=(DoublyLinkedList const& source) noexcept {
+        if (std::addressof(*this) != std::addressof(source)) {
+            clear();
+
+            std::shared_ptr<Node> trav = source.head;
+            for (size_t idx = 0; idx < source.size; ++idx, trav = trav->next) {
+                add(*trav->data);
+            }
+
+            if (source.is_circular) loop();
+        }
+
+        return *this;
+    }
 
     DoublyLinkedList(DoublyLinkedList&& source) noexcept {
         size = source.size;
+        is_circular = source.is_circular;
+
         std::swap(head, source.head);
         std::swap(tail, source.tail);
     }
 
     DoublyLinkedList& operator=(DoublyLinkedList&& source) noexcept {
         clear();
+
         size = source.size;
+        is_circular = source.is_circular;
+
         std::swap(head, source.head);
         std::swap(tail, source.tail);
+
         return *this;
     }
 
@@ -53,6 +80,8 @@ public:
     }
 
     void addFirst(T const& elem) noexcept {
+        loop_break_handle circ_h(*this);
+
         if (!size) {
             tail = head = std::make_shared<Node>(elem, nullptr, nullptr);
         } else {
@@ -65,6 +94,8 @@ public:
     }
 
     void addLast(T const& elem) noexcept {
+        loop_break_handle circ_h(*this);
+
         if (!size) {
             tail = head = std::make_shared<Node>(elem, nullptr, nullptr);
         } else {
@@ -76,9 +107,29 @@ public:
         ++size;
     }
 
+    void loop() noexcept {
+        if (size && !is_circular) {
+            auto locked_tail = tail.lock();
+            locked_tail->next = head;
+            head->prev = locked_tail;
+        }
+
+        is_circular = true;
+    }
+
+    void unloop() noexcept {
+        if (size && is_circular) {
+            auto locked_tail = tail.lock();
+            locked_tail->next.reset();
+            head->prev.reset();
+        }
+
+        is_circular = false;
+    }
+
     void insertAt(size_t index, T const& elem) noexcept {
-        if (size == 0 || index == 0) return addFirst(elem);
         if (index >= size) return addLast(elem);
+        if (index == 0) return addFirst(elem);
 
         std::shared_ptr<Node> trav;
 
@@ -114,8 +165,7 @@ public:
 
     void removeAt(size_t index) noexcept {
         if (size <= 1 || index == 0) return removeFirst();
-        if (index >= size) index = size - 1;
-        if (index == size - 1) return removeLast();
+        if (index >= size - 1) return removeLast();
 
         std::shared_ptr<Node> trav;
 
@@ -140,6 +190,8 @@ public:
     }
 
     void removeFirst() noexcept {
+        loop_break_handle circ_h(*this);
+
         if (!size) return;
         if (size == 1) {
             head.reset();
@@ -154,6 +206,8 @@ public:
     }
 
     void removeLast() noexcept {
+        loop_break_handle circ_h(*this);
+
         if (!size) return;
         if (size == 1) {
             tail.reset();
@@ -170,6 +224,8 @@ public:
     }
 
     void clear() noexcept {
+        loop_break_handle circ_h(*this);
+
         while (head) {
             removeLast();
         }
@@ -184,13 +240,11 @@ public:
         ss << "[";
 
         std::shared_ptr<Node> trav = l.head;
-        while (trav) {
+        for (size_t idx = 0; idx < l.size; ++idx, trav = trav->next) {
             ss << *trav->data;
-            if (trav->next) {
+            if (idx < l.size - 1) {
                 ss << " <-> ";
             }
-
-            trav = trav->next;
         }
 
         ss << "]";
@@ -201,11 +255,11 @@ public:
         return os << non_std::to_string(l);
     }
 
-    bool operator!=(DoublyLinkedList const& rhs) const noexcept {
+    bool operator!=(DoublyLinkedList const& rhs) noexcept {
         return !operator==(rhs);
     }
 
-    bool operator==(DoublyLinkedList const& rhs) const noexcept {
+    bool operator==(DoublyLinkedList const& rhs) noexcept {
         if (std::addressof(*this) == std::addressof(rhs)) {
             return true;
         }
@@ -213,6 +267,8 @@ public:
         if (size != rhs.size) {
             return false;
         }
+
+        loop_break_handle circ_h(*this);
 
         auto this_it = fd_iter();
         auto rhs_it = rhs.fd_iter();
@@ -228,27 +284,29 @@ public:
 protected:
     class Node {
     public:
-        Node(T const& i_data, std::shared_ptr<Node>& i_next, std::shared_ptr<Node>& i_prev) : 
+        Node(T const& i_data, std::shared_ptr<Node>& i_next, std::shared_ptr<Node>& i_prev) noexcept : 
             data(non_std::make_unique<T>(i_data)), 
             next(i_next),
             prev(i_prev)
         {}
 
-       Node(T const& i_data, std::nullptr_t i_next, std::shared_ptr<Node>& i_prev) :
+       Node(T const& i_data, std::nullptr_t i_next, std::shared_ptr<Node>& i_prev) noexcept :
             data(non_std::make_unique<T>(i_data)),
             next(i_next),
             prev(i_prev)
         {}
 
-        Node(T const& i_data, std::shared_ptr<Node>& i_next, std::nullptr_t i_prev) :
+        Node(T const& i_data, std::shared_ptr<Node>& i_next, std::nullptr_t i_prev) noexcept :
             data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
 
-        Node(T const& i_data, std::nullptr_t i_next, std::nullptr_t i_prev) : 
+        Node(T const& i_data, std::nullptr_t i_next, std::nullptr_t i_prev) noexcept : 
             data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
+
+        virtual ~Node() = default;
 
         std::unique_ptr<T> data;
         std::shared_ptr<Node> next;
@@ -256,16 +314,39 @@ protected:
     };
 
 public:
+    class loop_break_handle {
+    public:
+        loop_break_handle(DoublyLinkedList& l) noexcept : 
+            master{l},
+            circ{l.is_circular}
+        {
+            if (circ) master.unloop();
+        }
+
+        ~loop_break_handle() noexcept {
+            if (circ) master.loop();
+        }
+
+    private:
+        DoublyLinkedList& master;
+        bool circ;
+    };
+
+    friend class loop_break_handle;
+
     class bidirect_iter {
     public:
+        ~bidirect_iter() = default;
+
         bidirect_iter& operator=(const bidirect_iter& source) {
             if (std::addressof(master) != std::addressof(source.master)) {
                 throw std::invalid_argument("Unable to copy bidirect_iter owned by another instance of DoublyLinkedList");
             }
 
             if (std::addressof(*this) != std::addressof(source)) {
+                node_ptr = source.node_ptr.lock();
+                end_reached = source.end_reached;
                 forward_init = source.forward_init;
-                reset();
             }
 
             return *this;
@@ -330,7 +411,7 @@ public:
         friend class DoublyLinkedList;
 
     private:
-        bidirect_iter(DoublyLinkedList const& l, bool fd = true) :
+        bidirect_iter(DoublyLinkedList const& l, bool fd = true) noexcept :
             master{l},
             forward_init{fd}
         {
@@ -357,12 +438,15 @@ public:
 
 private:
     size_t size = 0;
+    bool is_circular = false;
     std::shared_ptr<Node> head = nullptr;
     std::weak_ptr<Node> tail;
 };
 
+
 /*int main(void) {
     DoublyLinkedList<int> dl;
+    dl.loop();
 
     dl.insertAt(1, 9);
     dl.removeAt(1);
@@ -371,31 +455,43 @@ private:
     dl.removeAt(1);
     dl.insertAt(3, 10);
     dl.insertAt(5, 15);
-    dl.removeAt(1);
+    dl.removeAt(0);
 
     dl.add(1);
     dl.add(2);
     dl.add(3);
     dl.add(4);
-    dl.add(5);
+    dl.addFirst(5);
 
     std::cout << dl << std::endl;
-
     auto it = dl.fd_iter();
-    it.assign(51);
 
-    for (;!it.exhausted(); it.step_forward()) {
-        std::cout << it.extract().fromJust() << " ";
+    { // RAII temporary uncycling
+        using loop_break_handle = decltype(dl)::loop_break_handle;
+        loop_break_handle circ_h(dl);
+
+        it.assign(51);
+
+        for (;!it.exhausted(); it.step_forward()) {
+            std::cout << it.extract().fromJust() << " ";
+        }
+
+        std::cout << std::endl;
     }
 
-    std::cout << std::endl;
+    { // Manual re-cycling
+        dl.unloop();
 
-    it = dl.bk_iter();
-    for (;!it.exhausted(); it.step_backward()) {
-        std::cout << it.extract().fromJust() << " ";
+        it = dl.bk_iter();
+        for (;!it.exhausted(); it.step_backward()) {
+            std::cout << it.extract().fromJust() << " ";
+        }
+
+        dl.loop();
+        std::cout << std::endl;
     }
 
-    std::cout << std::endl << "Exhausted iterator yields: " << it.extract() << std::endl;
+    std::cout << "Exhausted iterator yields: " << it.extract() << std::endl;
     std::cout << "First element: " << dl.getFirst() << std::endl;
     std::cout << "Last element: " << dl.getLast() << std::endl;
     std::cout << "Index of 10: " << dl.indexOf(10) << std::endl;
