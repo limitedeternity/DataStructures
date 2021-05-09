@@ -64,7 +64,7 @@ template <typename T>
 class Maybe {
 public:
     Maybe() {};
-    explicit Maybe(T const& value) : _value(std::move(non_std::make_unique<T>(value))) {};
+    explicit Maybe(T const& value) : _value(non_std::make_unique<T>(value)) {};
 
     template <typename WhenJust, typename WhenNothing>
     auto on(WhenJust&& whenJust, WhenNothing&& whenNothing) const -> decltype(whenNothing()) {
