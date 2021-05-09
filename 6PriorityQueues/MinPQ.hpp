@@ -3,11 +3,11 @@
 #include "../2Arrays/DynArray.hpp"
 
 template <typename T>
-class MaxPQ : public DynArray<T> {
+class MinPQ : public DynArray<T> {
 public:
-    MaxPQ() : DynArray<T>() {}
+    MinPQ() : DynArray<T>() {}
 
-    virtual ~MaxPQ() = default;
+    virtual ~MinPQ() = default;
     
     static size_t parent(size_t i) noexcept {
         return (i - 1) / 2;
@@ -48,13 +48,13 @@ public:
         this->add(val);
 
         // "Bubbling Up"
-        for (size_t i = this->size() - 1; i > 0 && this->at(parent(i)).fromJust() < this->at(i).fromJust(); i = parent(i)) {
+        for (size_t i = this->size() - 1; i > 0 && this->at(parent(i)).fromJust() > this->at(i).fromJust(); i = parent(i)) {
             std::swap(this->operator[](parent(i)), this->operator[](i));
         }
     }
 
     bool contains(T const& elem) const noexcept {
-        if (!this->size() || this->at(0).fromJust() < elem) {
+        if (!this->size() || this->at(0).fromJust() > elem) {
             return false;
         }
 
@@ -65,7 +65,7 @@ public:
                             (
                                 this->at(leftChild(i)).on(
                                    [&](T const& val) {
-                                       return val >= elem;
+                                       return val <= elem;
                                    },
                                    []() {
                                        return false;
@@ -75,7 +75,7 @@ public:
                             (
                                 this->at(rightChild(i)).on(
                                    [&](T const& val) {
-                                       return val >= elem;
+                                       return val <= elem;
                                    },
                                    []() {
                                        return false;
@@ -93,20 +93,20 @@ private:
     void heapify(size_t i) noexcept {
         size_t left = leftChild(i);
         size_t right = rightChild(i);
-        size_t largest = i;
+        size_t smallest = i;
 
-        if (left < this->size() && this->operator[](left) > this->operator[](largest)) largest = left;
-        if (right < this->size() && this->operator[](right) > this->operator[](largest)) largest = right;
+        if (left < this->size() && this->operator[](left) < this->operator[](smallest)) smallest = left;
+        if (right < this->size() && this->operator[](right) < this->operator[](smallest)) smallest = right;
 
-        if (largest != i) {
-            std::swap(this->operator[](i), this->operator[](largest));
-            heapify(largest);
+        if (smallest != i) {
+            std::swap(this->operator[](i), this->operator[](smallest));
+            heapify(smallest);
         }
     }
 };
 
 /*int main(void) {
-    MaxPQ<int> pq;
+    MinPQ<int> pq;
 
     pq.offer(1);
     pq.offer(10);
