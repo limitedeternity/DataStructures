@@ -15,8 +15,25 @@ public:
         clear();
     }
 
-    SinglyLinkedList(const SinglyLinkedList&) = delete;
-    SinglyLinkedList& operator=(const SinglyLinkedList&) = delete;
+    SinglyLinkedList(SinglyLinkedList const& source) noexcept {
+        std::shared_ptr<Node> trav = source.head;
+        for (size_t idx = 0; idx < source.size; ++idx, trav = trav->next) {
+            add(*trav->data);
+        }
+    }
+
+    SinglyLinkedList& operator=(SinglyLinkedList const& source) noexcept {
+        if (std::addressof(*this) != std::addressof(source)) {
+            clear();
+
+            std::shared_ptr<Node> trav = source.head;
+            for (size_t idx = 0; idx < source.size; ++idx, trav = trav->next) {
+                add(*trav->data);
+            }
+        }
+
+        return *this;
+    }
 
     SinglyLinkedList(SinglyLinkedList&& source) noexcept {
         size = source.size;
@@ -103,13 +120,11 @@ public:
         ss << "[";
 
         std::shared_ptr<Node> trav = l.head;
-        while (trav) {
+        for (size_t idx = 0; idx < l.size; ++idx, trav = trav->next) {
             ss << *trav->data;
-            if (trav->next) {
+            if (idx < l.size - 1) {
                 ss << " -> ";
             }
-
-            trav = trav->next;
         }
 
         ss << "]";
@@ -147,15 +162,17 @@ public:
 protected:
     class Node {
     public:
-        Node(T const& i_data, std::shared_ptr<Node>& i_next) : 
+        Node(T const& i_data, std::shared_ptr<Node>& i_next) noexcept : 
             data(non_std::make_unique<T>(i_data)), 
             next(i_next)
         {}
 
-       Node(T const& i_data, std::nullptr_t i_next) :
+       Node(T const& i_data, std::nullptr_t i_next) noexcept :
             data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
+
+        virtual ~Node() = default;
 
         std::unique_ptr<T> data;
         std::shared_ptr<Node> next;
@@ -164,13 +181,16 @@ protected:
 public:
     class forward_iter {
     public:
+        ~forward_iter() = default;
+
         forward_iter& operator=(const forward_iter& source) {
             if (std::addressof(master) != std::addressof(source.master)) {
                 throw std::invalid_argument("Unable to copy forward_iter owned by another instance of SinglyLinkedList");
             }
 
             if (std::addressof(*this) != std::addressof(source)) {
-                reset();
+                node_ptr = source.node_ptr.lock();
+                end_reached = source.end_reached;
             }
 
             return *this;
@@ -212,7 +232,7 @@ public:
         friend class SinglyLinkedList;
 
     private:
-        forward_iter(SinglyLinkedList const& l) :
+        forward_iter(SinglyLinkedList const& l) noexcept :
             master{l},
             node_ptr(l.head),
             end_reached{!l.head} 
@@ -244,7 +264,7 @@ private:
     lst.removeAt(1);
     lst.insertAt(3, 10);
     lst.insertAt(5, 15);
-    lst.removeAt(1);
+    lst.removeAt(0);
 
     lst.add(1);
     lst.add(2);
