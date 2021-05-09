@@ -39,5 +39,18 @@ namespace non_std {
     std::string to_string(T&& t) {
         return adl_helper::as_string(std::forward<T>(t));
     }
+
+    template<typename T>
+    struct has_meaningless_destructor : 
+        std::integral_constant<
+            bool,
+            std::is_arithmetic<T>::value ||
+            std::is_enum<T>::value ||
+            std::is_member_pointer<T>::value ||
+            std::is_same<std::nullptr_t, typename std::remove_cv<T>::type>::value ||
+            std::is_reference<T>::value ||
+            std::is_void<T>::value
+        > 
+    {};
 }
 

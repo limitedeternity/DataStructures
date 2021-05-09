@@ -126,20 +126,22 @@ public:
 
     void removeAt(size_t index) noexcept {
         if (!m_size) return;
-        if (index >= m_size - 1) {
-            m_buffer[m_size - 1].~T();
-            m_size--;
-            return;
-        }
+        if (index >= m_size) index = m_size - 1;
 
-        m_buffer[index].~T();
-        memmove(m_buffer + index, m_buffer + index + 1, sizeof(T) * (m_size - index - 1));
+        if (!non_std::has_meaningless_destructor<T>::value) 
+            m_buffer[index].~T();
+
+        if (index < m_size - 1) 
+            memmove(m_buffer + index, m_buffer + index + 1, sizeof(T) * (m_size - index - 1));
+
         m_size--;
     }
 
     void clear() noexcept {
-        for (size_t i = 0; i < m_size; ++i) {
-            m_buffer[i].~T();
+        if (!non_std::has_meaningless_destructor<T>::value) {
+            for (size_t i = 0; i < m_size; ++i) {
+                m_buffer[i].~T();
+            }
         }
 
         m_size = 0;
