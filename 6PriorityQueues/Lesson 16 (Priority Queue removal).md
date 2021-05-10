@@ -6,7 +6,7 @@ When we *poll* the PQ, the root node has to be removed. So, we swap the value of
 
 **“Bubbling Down” operation**: We begin to swap values with a child node (with *least* value if the heap is Min Heap or with *greatest* value if Max Heap while leaning to the **left** node if children values are *equal*) until heap invariant is satisfied or the bottom is reached.
 
-When we remove the *value* from the PQ, we first search the node with this value (DFS if Min Heap, BFS if Max Heap or Hash Table, if available) and perform a “Bubbling Down” operation **ignoring** heap invariant satisfaction. When the bottom is reached, we swap values with the **rightmost** node and remove the latter.
+When we remove the *value* from the PQ, we first search the node with this value and then perform a “Bubbling Down” operation **ignoring** heap invariant satisfaction. When the bottom is reached, we swap values with the **rightmost** node and remove the latter.
 
 ### Removing Elements From a Binary Heap in O(log(n))
 

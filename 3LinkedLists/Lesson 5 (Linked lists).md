@@ -20,7 +20,7 @@
 
 ### Singly vs Doubly Linked lists
 
-> Singly linked lists only hold a reference to the next node. In the implementation you always maintain a reference to the **head** of the linked list and a reference to the **tail** node for quick additions/removals.
+> Singly linked lists only hold a reference to the next node. In the implementation you always maintain a reference to the **head** of the linked list for quick additions/removals and – optionally – a reference to the **tail** for maintaining a circular link.
 
 > In a doubly linked list each node holds a reference to the next and previous nodes. In the implementation you always maintain a reference to the **head** and the **tail** of the doubly linked list to do quick additions/removals from *both ends* of your list.
 
