@@ -344,7 +344,7 @@ public:
             }
 
             if (std::addressof(*this) != std::addressof(source)) {
-                node_ptr = source.node_ptr.lock();
+                node_ptr = source.node_ptr;
                 end_reached = source.end_reached;
                 forward_init = source.forward_init;
             }
