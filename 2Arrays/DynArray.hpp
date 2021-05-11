@@ -94,12 +94,12 @@ public:
         if (!len) return;
 
         uint64_t this_range_start = (uintptr_t)m_buffer;
-        uint64_t this_range_end = (uintptr_t)(m_buffer + m_size);
+        uint64_t this_range_end = this_range_start + m_size;
         uint64_t buffer_range_start = (uintptr_t)data;
-        uint64_t buffer_range_end = (uintptr_t)(data + len);
+        uint64_t buffer_range_end = buffer_range_start + len;
 
-        if (buffer_range_end == this_range_end &&
-            buffer_range_start >= this_range_start) {
+        if (this_range_end >= buffer_range_start &&
+            this_range_start <= buffer_range_end) {
 
             return;
         }
