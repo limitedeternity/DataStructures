@@ -128,17 +128,25 @@ public:
         if (!m_size) return;
         if (index >= m_size) index = m_size - 1;
 
-        if (!non_std::has_meaningless_destructor<T>::value) 
+        #if __cplusplus > 201402L
+        if constexpr (!non_std::has_meaningless_destructor<T>::value)
+        #else
+        if (!non_std::has_meaningless_destructor<T>::value)
+        #endif
             m_buffer[index].~T();
 
-        if (index < m_size - 1) 
+        if (index < m_size - 1)
             memmove(m_buffer + index, m_buffer + index + 1, sizeof(T) * (m_size - index - 1));
 
         m_size--;
     }
 
     void clear() noexcept {
+        #if __cplusplus > 201402L
+        if constexpr (!non_std::has_meaningless_destructor<T>::value) {
+        #else
         if (!non_std::has_meaningless_destructor<T>::value) {
+        #endif
             for (size_t i = 0; i < m_size; ++i) {
                 m_buffer[i].~T();
             }
@@ -168,7 +176,7 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, DynArray const& d) noexcept {
-        return os << non_std::to_string(d); 
+        return os << non_std::to_string(d);
     }
 
     bool operator!=(DynArray const& rhs) const noexcept {
