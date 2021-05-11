@@ -20,7 +20,7 @@ public:
     }
 
     bool contains(T const& elem) const noexcept {
-        return this->indexOf(elem).isJust();        
+        return this->indexOf(elem).isJust();
     }
 };
 

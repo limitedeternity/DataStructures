@@ -42,7 +42,7 @@ namespace non_std {
     }
 
     template<typename T>
-    struct has_meaningless_destructor : 
+    struct has_meaningless_destructor :
         std::integral_constant<
             bool,
             std::is_arithmetic<T>::value ||
@@ -51,7 +51,6 @@ namespace non_std {
             std::is_same<std::nullptr_t, typename std::remove_cv<T>::type>::value ||
             std::is_reference<T>::value ||
             std::is_void<T>::value
-        > 
+        >
     {};
 }
-

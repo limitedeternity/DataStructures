@@ -49,7 +49,7 @@ public:
 
     Maybe<T> get() const noexcept {
         if (!size) {
-            return Maybe<T>(); 
+            return Maybe<T>();
         }
 
         return return_<Maybe>(*head->data);
@@ -162,8 +162,8 @@ public:
 protected:
     class Node {
     public:
-        Node(T const& i_data, std::shared_ptr<Node>& i_next) noexcept : 
-            data(non_std::make_unique<T>(i_data)), 
+        Node(T const& i_data, std::shared_ptr<Node>& i_next) noexcept :
+            data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
 
@@ -204,7 +204,7 @@ public:
 
         void assign(T const& elem) noexcept {
             auto ptr_locked = node_ptr.lock();
-            if (ptr_locked) *ptr_locked->data = elem; 
+            if (ptr_locked) *ptr_locked->data = elem;
         }
 
         void reset() noexcept {
@@ -235,7 +235,7 @@ public:
         forward_iter(SinglyLinkedList const& l) noexcept :
             master{l},
             node_ptr(l.head),
-            end_reached{!l.head} 
+            end_reached{!l.head}
         {}
 
         SinglyLinkedList const& master;

@@ -284,8 +284,8 @@ public:
 protected:
     class Node {
     public:
-        Node(T const& i_data, std::shared_ptr<Node>& i_next, std::shared_ptr<Node>& i_prev) noexcept : 
-            data(non_std::make_unique<T>(i_data)), 
+        Node(T const& i_data, std::shared_ptr<Node>& i_next, std::shared_ptr<Node>& i_prev) noexcept :
+            data(non_std::make_unique<T>(i_data)),
             next(i_next),
             prev(i_prev)
         {}
@@ -301,7 +301,7 @@ protected:
             next(i_next)
         {}
 
-        Node(T const& i_data, std::nullptr_t i_next, std::nullptr_t i_prev) noexcept : 
+        Node(T const& i_data, std::nullptr_t i_next, std::nullptr_t i_prev) noexcept :
             data(non_std::make_unique<T>(i_data)),
             next(i_next)
         {}
@@ -316,7 +316,7 @@ protected:
 public:
     class loop_break_handle {
     public:
-        loop_break_handle(DoublyLinkedList& l) noexcept : 
+        loop_break_handle(DoublyLinkedList& l) noexcept :
             master{l},
             circ{l.is_circular}
         {
@@ -360,7 +360,7 @@ public:
 
         void assign(T const& elem) noexcept {
             auto ptr_locked = node_ptr.lock();
-            if (ptr_locked) *ptr_locked->data = elem; 
+            if (ptr_locked) *ptr_locked->data = elem;
         }
 
         void reset() noexcept {

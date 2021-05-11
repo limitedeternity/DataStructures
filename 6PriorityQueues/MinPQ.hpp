@@ -8,7 +8,7 @@ public:
     MinPQ() : DynArray<T>() {}
 
     virtual ~MinPQ() = default;
-    
+
     static size_t parent(size_t i) noexcept {
         return (i - 1) / 2;
     }
