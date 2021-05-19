@@ -33,3 +33,54 @@
 
 > \* Using a Hash Table to optimize these operations takes up linear space and also adds some overhead to the binary heap implementation.
 
+### Turning Min PQ into Max PQ
+
+**Problem**: Often the standard library of most programming languages only provide a Min PQ which sorts by smallest elements first, but sometimes we need a Max PQ.
+
+> Since elements in a PQ are comparable they implement some sort of *comparable interface* which we can simply *negate* to achieve a Max heap.
+
+> An alternative method for numbers is to negate the numbers as you insert them into the PQ and negate them again when they are taken out.
+
+### Priority Queue with Binary Heap
+
+There are many types of heaps we could use to implement a priority queue including:
+
+* Binary Heap
+* Fibonacci Heap
+* Binomial Heap
+* Pairing Heap
+* <…>
+
+### Binary Heap Representation
+
+> Binary Heap can be represented as an array. Array is usually being constructed level-by-level left-to-right.
+
+Let *i* be the parent node index.
+Then, left child index will be *2i + 1* and right child index will be *2i + 2*.
+
+### Adding Elements to Binary Heap
+
+We insert the node at the very bottom and perform a so-called “Bubbling Up” operation.
+
+**“Bubbling Up” operation**: We begin to swap values with the parent node until heap invariant is satisfied or the top is reached.
+
+> The structure of a binary heap used for a priority queue should always be in the form of a *complete tree* to maintain an insertion point.
+
+### Removing Elements From a Binary Heap
+
+When we *poll* the PQ, the root node has to be removed. So, we swap the value of the root node with the **bottom-right** leaf and remove the latter. After that, we perform a so-called “Bubbling Down” operation.
+
+**“Bubbling Down” operation**: We begin to swap values with a child node (with *least* value if the heap is Min Heap or with *greatest* value if Max Heap while leaning to the **left** node if children values are *equal*) until heap invariant is satisfied or the bottom is reached.
+
+When we remove the *value* from the PQ, we first search the node with this value and then perform a “Bubbling Down” operation **ignoring** heap invariant satisfaction. When the bottom is reached, we swap values with the **rightmost** node and remove the latter.
+
+### Removing Elements From a Binary Heap in O(log(n))
+
+The inefficiency of the removal algorithm comes from the fact that we have to perform a linear search to find out where an element is indexed at. What if instead we did a lookup using a *Hash Table* to find out where a node is indexed at?
+
+A *Hash Table* provides a constant time lookup and update for a mapping from a key (the node value) to value (the index).
+
+**Dealing with the multiple value problem:**
+
+Instead of one-to-one mapping we will use one-to-many. We can maintain a *Set* or *Tree Set* of indexes for which a particular node value (key) maps to.
+
